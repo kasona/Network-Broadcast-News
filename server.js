@@ -1,24 +1,28 @@
 // Requires
 var net = require('net');
-var fs = require('fs');
-
 // Variables ( easier to edit, if needed )
 var HOST = '0.0.0.0';
 var PORT = '6969';
 
+
 // Creating a server with net
-var server = net.createServer(function(c) {
+// c is socket connection, can have many sockets
+var server = net.createServer(function(socket) {
 
   // Start of connection
-  console.log('CONNECTED: ' + HOST + ':' + PORT);
+  console.log('Server Connected: ' + HOST + ':' + PORT);
+  socket.write('this has to be dynamic');
 
-  // End of connection
-  c.on('end', function() {
-    console.log('DISCONNECTED: ' + HOST + ':' + PORT);
+  // Listening for data event
+  socket.on('data', function(chunk) {
+  //process is apart of node, stdout displays to terminal
+    process.stdout.write(chunk);
   });
 
-  c.write('hello\r\n');
-  c.pipe(c);
+  // End of connection
+  socket.on('end', function() {
+    console.log('Server Disconnect: ' + HOST + ':' + PORT);
+  });
 });
 
 server.listen(PORT, HOST);
