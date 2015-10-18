@@ -8,24 +8,29 @@ var PORT = '6969';
 
 //client.connect(port, host, callback)
 client.connect(PORT, HOST, function() {
-  console.log('Connected');
-  client.write('This is Client1! ');
+  console.log('Welcome!');
+  process.stdout.write('Enter a username: ');
 
+  process.stdin.setEncoding('utf8');
   // Takes in data and writes it to server
   // 'data' is the event on is looking/listening for
   process.stdin.on('data', function(chunk) {
-    client.write('Client 1: ');
-    client.write(chunk);
+    if ( chunk !== null ) {
+      client.write(chunk.toString());
+    }
+  });
+  process.stdin.on('end', function() {
+    client.write('connection ended');
   });
 
 });
 
 client.on('data', function(data) {
-  console.log('Received: ' + data);
+  console.log(data.toString().trim());
   // client.destroy();
 });
 
-// client.on('close', function() {
-//   console.log('Connection closed');
-// });
+client.on('close', function() {
+  console.log('Connection closed');
+});
 console.log(client);

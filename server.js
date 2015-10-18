@@ -1,58 +1,59 @@
-// Requires
 var net = require('net');
-
-
-// Variables ( easier to edit, if needed )
 var HOST = '0.0.0.0';
-var PORT = '6969';
-
-// Object to store clients (keep track of clients when connecting)
+var PORT = 6969;
 var clients = [];
 
-// Creating a server with net
-// c is socket connection, can have many sockets
 var server = net.createServer(function(socket) {
-  // ask for a username
+  // set socket.id to null asap
+  socket.id = null;
+  // look for admin
+  socket.admin = 'admin';
+
+  // push clients into an array
   clients.push(socket);
 
-  // Start of connection
-  console.log('Server Connected: ' + HOST + ':' + PORT);
+  //input data from clients
+  socket.on('data', function(data) {
+    // trim takes away white spaces
+    var clientId = data.toString().trim();
+    var adminId = data.toString().trim();
 
-  // Listening for data event
-  socket.on('data', function(chunk) {
-    console.log('received:', chunk);
-    sendAll(chunk);
-    // create a sendAll(); using the client array, stdout to all clients in [];
-    //process is apart of node, stdout displays to terminal
-    process.stdout.write(chunk);
-
+    // ========== username ======
+    // Check for Admins first, rest should be regular people
+    if (socket.id === null) {
+      socket.id = clientId;
+    } else if (socket.id === 'admin') {
+      admin(socket.id + ': ' + data, socket);
+    } else {
+      chat(socket.id + ': ' + data, socket);
+    }
   });
 
-  // End of connection
-  socket.on('end', function() {
-    console.log('Server Disconnect: ' + HOST + ':' + PORT);
-  });
+  // ============== Admin ===============
+  function admin(message, sender) {
+    clients.forEach(function(clientName) {
+      // search for client.id's with admin
+      if (clientName.id === 'admin') {
+        clientName.write(message);
+      }
+    });
+    process.stdout.write(message);
+  }
+
+  //if not from sender post to all other sockets
+  function chat(message, sender) {
+    clients.forEach(function(clientName) {
+      if (clientName.id === sender.id) {
+        return;
+      }
+      clientName.write(message);
+    });
+    process.stdout.write(message);
+  }
+
 });
 
-server.listen(PORT, HOST);
-console.log('Listening on .. Host:', HOST, 'Port:', PORT);
-
-// ================ Broadcast =====================
-function sendAll (data) {
-  for ( var i = 0; i < clients.length; i++) {
-    clients[i].write(data);
-  }
-}
-
-// =============== Ask for Username ==============
-function username () {
-  socket.on('data', function(chunk) {
-    console.log('Please enter a username:');
-    //Store the first input as user name
-    console.log('Is this correct? y / n  ' + username);
-    // If client's input ( to lowercase ) == y then store username into array
-    // Put username infront of users chunk
-    // If client's input ( to lowercase ) == n then Ask user to re-enter username, loop to check
-    // If client's input ( to lowercase ) !== y && n then err, user needs to re-enter y or n
-  });
-}
+//listen to port address
+server.listen({ host : HOST, port : PORT,} , function() {
+  console.log('server listening on ' + HOST + ':' + PORT);
+});
